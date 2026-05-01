@@ -7,7 +7,6 @@ export interface VentaListItem {
   total: number;
   medio_pago: string;
   estado: string;
-  usuario_id: number;
 }
 
 export const ventasApi = {

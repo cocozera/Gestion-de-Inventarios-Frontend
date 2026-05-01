@@ -51,9 +51,3 @@ export interface VentaResponse {
   mensaje: string;
   ticket_id: number;
 }
-
-export interface Categoria {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-}
