@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { productosApi } from '../../api/productos';
 import { Producto } from '../../types';
 import { formatPrecio } from '../../utils/format';
+import { dataCache } from '../../utils/cache';
 import styles from './Productos.module.css';
 
 interface FormData {
@@ -35,8 +36,14 @@ export default function Productos() {
   const [guardando, setGuardando] = useState(false);
 
   const load = useCallback(() => {
+    // Solo usamos caché para la lista sin filtro
+    if (!q) {
+      const cached = dataCache.get<Producto[]>('productos', 'all');
+      if (cached) { setProductos(cached); setLoading(false); return; }
+    }
     setLoading(true);
     productosApi.listar(q).then((data) => {
+      if (!q) dataCache.set('productos', data, 'all');
       setProductos(data);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -75,6 +82,8 @@ export default function Productos() {
       } else {
         await productosApi.crear({ ...form, categoria_id: 1 });
       }
+      // Invalidar caché: productos cambió → dashboard también lo refleja
+      dataCache.invalidate('productos', 'dashboard');
       setModal('cerrado');
       load();
     } catch (err: unknown) {

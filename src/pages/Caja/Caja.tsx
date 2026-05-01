@@ -7,6 +7,7 @@ import CartGrid from './CartGrid';
 import PaymentModal from './PaymentModal';
 import styles from './Caja.module.css';
 import { formatPrecio } from '../../utils/format';
+import { dataCache } from '../../utils/cache';
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -102,6 +103,8 @@ export default function Caja() {
           precio_unitario: it.precio_unitario,
         })),
       });
+      // Invalidar cachés: la venta afecta ventas, dashboard y el stock de productos
+      dataCache.invalidate('ventas', 'dashboard', 'productos');
       setTicketId(resp.ticket_id);
       setCarrito([]);
       sessionStorage.removeItem('carrito');

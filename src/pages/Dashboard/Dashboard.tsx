@@ -3,6 +3,7 @@ import { productosApi } from '../../api/productos';
 import { ventasApi, VentaListItem } from '../../api/ventas';
 import { Producto } from '../../types';
 import { formatPrecio } from '../../utils/format';
+import { dataCache } from '../../utils/cache';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
@@ -12,10 +13,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     const hoy = new Date().toISOString().slice(0, 10);
+
+    const cachedProds = dataCache.get<Producto[]>('productos', 'all');
+    const cachedVents = dataCache.get<VentaListItem[]>('ventas', hoy);
+
+    if (cachedProds && cachedVents) {
+      setProductos(cachedProds);
+      setVentas(cachedVents);
+      setLoading(false);
+      return;
+    }
+
     Promise.all([
-      productosApi.listar(),
-      ventasApi.listar(`${hoy}T00:00:00`, `${hoy}T23:59:59`),
+      cachedProds ? Promise.resolve(cachedProds) : productosApi.listar(),
+      cachedVents ? Promise.resolve(cachedVents) : ventasApi.listar(`${hoy}T00:00:00`, `${hoy}T23:59:59`),
     ]).then(([prods, vents]) => {
+      dataCache.set('productos', prods, 'all');
+      dataCache.set('ventas', vents, hoy);
       setProductos(prods);
       setVentas(vents);
       setLoading(false);

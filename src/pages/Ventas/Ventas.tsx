@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ventasApi, VentaListItem } from '../../api/ventas';
 import { formatPrecio, formatFecha } from '../../utils/format';
+import { dataCache } from '../../utils/cache';
 import styles from './Ventas.module.css';
 
 function hoy() {
@@ -14,10 +15,18 @@ export default function Ventas() {
   const [hasta, setHasta] = useState(hoy());
 
   useEffect(() => {
+    const subkey = `${desde}_${hasta}`;
+    const cached = dataCache.get<VentaListItem[]>('ventas', subkey);
+    if (cached) {
+      setVentas(cached);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const desdeISO = desde ? `${desde}T00:00:00` : undefined;
     const hastaISO = hasta ? `${hasta}T23:59:59` : undefined;
     ventasApi.listar(desdeISO, hastaISO).then((data) => {
+      dataCache.set('ventas', data, subkey);
       setVentas(data);
       setLoading(false);
     }).catch(() => setLoading(false));
