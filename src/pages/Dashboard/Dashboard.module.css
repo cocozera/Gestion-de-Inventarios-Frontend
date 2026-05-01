@@ -35,9 +35,9 @@
 }
 
 .cardDestacado {
-  border-color: var(--accent);
-  border-left: 4px solid var(--accent);
-  background: rgba(192, 57, 43, 0.04);
+  border-color: var(--secondary);
+  border-left: 4px solid var(--secondary);
+  background: var(--secondary-soft);
 }
 
 .cardLabel {
@@ -58,7 +58,7 @@
 }
 
 .cardDestacado .cardValue {
-  color: var(--accent);
+  color: var(--secondary);
 }
 
 .section {

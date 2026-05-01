@@ -6,6 +6,9 @@
   --text-muted: #71717a;
   --accent: #c0392b;
   --accent-hover: #a93226;
+  --secondary: #4a7fc4;
+  --secondary-hover: #3a6fb4;
+  --secondary-soft: rgba(74, 127, 196, 0.1);
   --success: #16a34a;
   --danger: #dc2626;
   --warning: #d97706;
@@ -50,12 +53,12 @@ input, select {
 }
 
 input:focus, select:focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--secondary);
   outline-offset: 2px;
 }
 
 a {
-  color: var(--accent);
+  color: var(--secondary);
   text-decoration: none;
 }
 

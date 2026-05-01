@@ -3,10 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { productosApi } from '../../api/productos';
 import { ventasApi } from '../../api/ventas';
 import { ItemCarrito, MedioPago, Producto } from '../../types';
+import ProductSearch from './ProductSearch';
 import CartGrid from './CartGrid';
 import PaymentModal from './PaymentModal';
 import styles from './Caja.module.css';
-import { formatPrecio } from '../../utils/format';
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -15,19 +15,14 @@ function round2(n: number) {
 export default function Caja() {
   const { usuario } = useAuth();
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
-  const [searchVal, setSearchVal] = useState('');
   const [searchError, setSearchError] = useState('');
   const [resultados, setResultados] = useState<Producto[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [procesando, setProcesando] = useState(false);
   const [ticketId, setTicketId] = useState<number | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const total = round2(carrito.reduce((acc, it) => acc + it.precio_unitario * it.cantidad, 0));
-  const cantItems = carrito.reduce((acc, it) => acc + it.cantidad, 0);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
 
   const agregar = useCallback((id: number, nombre: string, precio_venta: number) => {
     setCarrito((prev) => {
@@ -41,24 +36,24 @@ export default function Caja() {
     });
     setSearchError('');
     setResultados([]);
-    setSearchVal('');
-    inputRef.current?.focus();
   }, []);
 
-  const buscar = useCallback(async (valor: string) => {
-    const v = valor.trim();
-    if (!v) return;
+  const buscarYAgregar = useCallback(async (valor: string) => {
     setSearchError('');
     setResultados([]);
 
+    // 1. Intentar por código de barras exacto
     try {
-      const producto = await productosApi.buscarPorCodigo(v);
+      const producto = await productosApi.buscarPorCodigo(valor);
       agregar(producto.id, producto.nombre, producto.precio_venta);
       return;
-    } catch { /* buscar por nombre */ }
+    } catch {
+      // no encontrado por código, buscar por nombre
+    }
 
+    // 2. Buscar por nombre
     try {
-      const lista = await productosApi.listar(v);
+      const lista = await productosApi.listar(valor);
       const activos = lista.filter((p) => p.estado);
       if (activos.length === 0) {
         setSearchError('Producto no encontrado');
@@ -72,11 +67,7 @@ export default function Caja() {
     }
   }, [agregar]);
 
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    buscar(searchVal);
-  }
-
+  // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -140,137 +131,81 @@ export default function Caja() {
     return () => window.removeEventListener('keydown', handler);
   }, [carrito.length, modalOpen]);
 
+  const totalItems = carrito.reduce((acc, it) => acc + it.cantidad, 0);
+
   return (
     <div className={styles.wrapper} ref={wrapperRef}>
-
-      <div className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <h1>Punto de Venta</h1>
-          <p className={styles.topBarMeta}>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageTitleGroup}>
+          <h1 className={styles.pageTitle}>Punto de Venta</h1>
+          <p className={styles.meta}>
             {usuario?.nombre || usuario?.username}
             {' · '}
             {new Date().toLocaleDateString('es-AR', { dateStyle: 'long' })}
           </p>
         </div>
-      </div>
+      </header>
 
       {ticketId && (
         <div className={styles.ticketBanner} onClick={() => setTicketId(null)}>
-          ✅ Venta registrada — Ticket #{ticketId} · Click para cerrar
+          <span>✓</span>
+          <span>Venta procesada — Ticket #{ticketId}</span>
+          <span style={{ marginLeft: 'auto', fontSize: '0.78rem', opacity: 0.7 }}>Click para cerrar</span>
         </div>
       )}
 
-      <div className={styles.body}>
+      <div className={styles.posLayout}>
+        <div className={styles.leftCol}>
+          <ProductSearch
+            onSearch={buscarYAgregar}
+            onSelectProducto={(p) => agregar(p.id, p.nombre, p.precio_venta)}
+            resultados={resultados}
+            disabled={procesando}
+            error={searchError}
+          />
 
-        {/* ── Panel izquierdo ── */}
-        <div className={styles.leftPanel}>
-
-          {/* Barra de búsqueda */}
-          <form onSubmit={handleSearchSubmit} className={styles.searchBar}>
-            <div className={styles.searchWrap}>
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchVal}
-                onChange={(e) => { setSearchVal(e.target.value); setSearchError(''); }}
-                placeholder="Código de barras o nombre del producto..."
-                disabled={procesando}
-                autoComplete="off"
-                className={`${styles.searchInput} ${searchError ? styles.hasError : ''}`}
-              />
-              {resultados.length > 1 && (
-                <div className={styles.dropdown}>
-                  {resultados.map((p) => (
-                    <div
-                      key={p.id}
-                      className={styles.dropdownItem}
-                      onClick={() => agregar(p.id, p.nombre, p.precio_venta)}
-                    >
-                      <div>
-                        <div className={styles.dropdownItemName}>{p.nombre}</div>
-                        <div className={styles.dropdownItemMeta}>
-                          {p.codigo_barras} · Stock: {p.stock_actual}
-                        </div>
-                      </div>
-                      <div className={styles.dropdownItemPrice}>
-                        {formatPrecio(p.precio_venta)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              type="submit"
-              className={styles.btnBuscar}
-              disabled={procesando || !searchVal.trim()}
-            >
-              Buscar
-            </button>
-          </form>
-
-          {searchError && <p className={styles.searchError}>{searchError}</p>}
-
-          {/* Carrito */}
           <div className={styles.cartCard}>
-            <div className={styles.cartHeader}>
-              <span className={styles.cartHeaderLabel}>Artículos</span>
+            <div className={styles.cartCardHeader}>
+              <span className={styles.cartCardTitle}>Artículos</span>
               {carrito.length > 0 && (
-                <span className={styles.cartHeaderCount}>
-                  {cantItems} unidad{cantItems !== 1 ? 'es' : ''}
-                </span>
+                <span className={styles.cartCount}>{totalItems}</span>
               )}
             </div>
-            <div className={styles.cartBody}>
-              <CartGrid items={carrito} onMas={mas} onMenos={menos} onEliminar={eliminar} />
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── Panel derecho ── */}
-        <div className={styles.rightPanel}>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryTop}>
-              <div className={styles.summaryLabel}>Total a cobrar</div>
-              <div className={styles.summaryTotal}>{formatPrecio(total)}</div>
-            </div>
-
-            {carrito.length > 0 && (
-              <div className={styles.summaryRows}>
-                <div className={styles.summaryRow}>
-                  <span>Ítems distintos</span>
-                  <span>{carrito.length}</span>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>Unidades totales</span>
-                  <span>{cantItems}</span>
-                </div>
+            {carrito.length === 0 ? (
+              <div className={styles.emptyCart}>
+                <span className={styles.emptyIcon}>🛒</span>
+                <span>El carrito está vacío</span>
+                <span style={{ fontSize: '0.8rem' }}>Buscá o escaneá un producto para agregar</span>
               </div>
+            ) : (
+              <CartGrid items={carrito} onMas={mas} onMenos={menos} onEliminar={eliminar} />
             )}
-
-            <div className={styles.summaryActions}>
-              <button
-                type="button"
-                className={styles.btnCobrar}
-                onClick={() => setModalOpen(true)}
-                disabled={carrito.length === 0 || procesando}
-              >
-                Cobrar
-              </button>
-              <p className={styles.hint}>F12 para cobrar rápido</p>
-              <button
-                type="button"
-                className={styles.btnVaciar}
-                onClick={() => setCarrito([])}
-                disabled={carrito.length === 0 || procesando}
-              >
-                Vaciar carrito
-              </button>
-            </div>
           </div>
         </div>
 
+        <div className={styles.rightCol}>
+          <div className={styles.summaryPanel}>
+            <p className={styles.summaryLabel}>Total a cobrar</p>
+            <p className={styles.summaryTotal}>{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(total)}</p>
+            <button
+              type="button"
+              className={styles.btnCobrar}
+              onClick={() => setModalOpen(true)}
+              disabled={carrito.length === 0 || procesando}
+            >
+              Cobrar
+            </button>
+            <span className={styles.shortcut}>F12 para cobrar rápido</span>
+            <button
+              type="button"
+              className={styles.btnVaciar}
+              onClick={() => setCarrito([])}
+              disabled={carrito.length === 0}
+            >
+              Vaciar carrito
+            </button>
+          </div>
+        </div>
       </div>
 
       {modalOpen && (

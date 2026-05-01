@@ -74,13 +74,14 @@
 }
 
 .rol {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  color: #fff;
+  background: var(--secondary);
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 
 .logout {
