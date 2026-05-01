@@ -3,7 +3,7 @@ import { Producto, ProductoBusqueda } from '../types';
 
 export const productosApi = {
   buscarPorCodigo: (codigo: string) =>
-    api.get<ProductoBusqueda>(`/api/productos/${codigo}`),
+    api.get<ProductoBusqueda>(`/api/productos/buscar/${codigo}`),
 
   listar: (q = '', skip = 0, limit = 50) =>
     api.get<Producto[]>(`/api/productos/?q=${encodeURIComponent(q)}&skip=${skip}&limit=${limit}`),

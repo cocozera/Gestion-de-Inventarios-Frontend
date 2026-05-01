@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { productosApi } from '../../api/productos';
 import { ventasApi } from '../../api/ventas';
-import { ItemCarrito, MedioPago, Producto } from '../../types';
+import { ItemCarrito, MedioPago } from '../../types';
 import CartGrid from './CartGrid';
 import PaymentModal from './PaymentModal';
 import styles from './Caja.module.css';
@@ -17,12 +17,11 @@ export default function Caja() {
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
   const [searchVal, setSearchVal] = useState('');
   const [searchError, setSearchError] = useState('');
-  const [resultados, setResultados] = useState<Producto[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [procesando, setProcesando] = useState(false);
   const [ticketId, setTicketId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const buscandoRef = useRef(false);
 
   const total = round2(carrito.reduce((acc, it) => acc + it.precio_unitario * it.cantidad, 0));
   const cantItems = carrito.reduce((acc, it) => acc + it.cantidad, 0);
@@ -40,35 +39,23 @@ export default function Caja() {
       return [...prev, { producto_id: id, nombre, precio_unitario: precio_venta, cantidad: 1 }];
     });
     setSearchError('');
-    setResultados([]);
     setSearchVal('');
     inputRef.current?.focus();
   }, []);
 
   const buscar = useCallback(async (valor: string) => {
-    const v = valor.trim();
-    if (!v) return;
+    const v = valor.trim().replace(/\D/g, '');
+    if (!v || buscandoRef.current) return;
+    buscandoRef.current = true;
     setSearchError('');
-    setResultados([]);
 
     try {
       const producto = await productosApi.buscarPorCodigo(v);
       agregar(producto.id, producto.nombre, producto.precio_venta);
-      return;
-    } catch { /* buscar por nombre */ }
-
-    try {
-      const lista = await productosApi.listar(v);
-      const activos = lista.filter((p) => p.estado);
-      if (activos.length === 0) {
-        setSearchError('Producto no encontrado');
-      } else if (activos.length === 1) {
-        agregar(activos[0].id, activos[0].nombre, activos[0].precio_venta);
-      } else {
-        setResultados(activos);
-      }
     } catch {
-      setSearchError('Error al buscar producto');
+      setSearchError('Código no encontrado');
+    } finally {
+      buscandoRef.current = false;
     }
   }, [agregar]);
 
@@ -77,15 +64,6 @@ export default function Caja() {
     buscar(searchVal);
   }
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setResultados([]);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
 
   const mas = (i: number) =>
     setCarrito((prev) => prev.map((it, idx) => idx === i ? { ...it, cantidad: it.cantidad + 1 } : it));
@@ -132,7 +110,6 @@ export default function Caja() {
         if (carrito.length > 0 && !modalOpen) setModalOpen(true);
       }
       if (e.key === 'Escape') {
-        setResultados([]);
         setModalOpen(false);
       }
     };
@@ -141,7 +118,7 @@ export default function Caja() {
   }, [carrito.length, modalOpen]);
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
+    <div className={styles.wrapper}>
 
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
@@ -171,34 +148,17 @@ export default function Caja() {
               <input
                 ref={inputRef}
                 type="text"
+                inputMode="numeric"
                 value={searchVal}
-                onChange={(e) => { setSearchVal(e.target.value); setSearchError(''); }}
-                placeholder="Código de barras o nombre del producto..."
+                onChange={(e) => {
+                  setSearchVal(e.target.value.replace(/\D/g, ''));
+                  setSearchError('');
+                }}
+                placeholder="Ingresá el código de barras..."
                 disabled={procesando}
                 autoComplete="off"
                 className={`${styles.searchInput} ${searchError ? styles.hasError : ''}`}
               />
-              {resultados.length > 1 && (
-                <div className={styles.dropdown}>
-                  {resultados.map((p) => (
-                    <div
-                      key={p.id}
-                      className={styles.dropdownItem}
-                      onClick={() => agregar(p.id, p.nombre, p.precio_venta)}
-                    >
-                      <div>
-                        <div className={styles.dropdownItemName}>{p.nombre}</div>
-                        <div className={styles.dropdownItemMeta}>
-                          {p.codigo_barras} · Stock: {p.stock_actual}
-                        </div>
-                      </div>
-                      <div className={styles.dropdownItemPrice}>
-                        {formatPrecio(p.precio_venta)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
             <button
               type="submit"
