@@ -5,11 +5,15 @@
 
 .wrapper h1 {
   margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .subtitle {
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
   text-transform: capitalize;
 }
 
@@ -27,26 +31,34 @@
   padding: 1.25rem 1.5rem;
   min-width: 170px;
   flex: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .cardDestacado {
-  border-color: var(--success);
-  background: rgba(63, 185, 80, 0.07);
+  border-color: var(--accent);
+  border-left: 4px solid var(--accent);
+  background: rgba(192, 57, 43, 0.04);
 }
 
 .cardLabel {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-bottom: 0.4rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 
 .cardValue {
   font-size: 2rem;
   font-weight: 800;
   line-height: 1;
+  color: var(--text);
+}
+
+.cardDestacado .cardValue {
+  color: var(--accent);
 }
 
 .section {
@@ -54,29 +66,44 @@
 }
 
 .section h2 {
-  font-size: 1rem;
+  font-size: 0.8rem;
   margin-bottom: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-weight: 700;
 }
 
 .list {
   list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .list li {
-  padding: 0.5rem 0;
+  padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.list li:last-child {
+  border-bottom: none;
 }
 
 .miniTabla {
   width: 100%;
   border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .miniTabla td {
-  padding: 0.5rem 0.5rem;
+  padding: 0.55rem 1rem;
   border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
 }

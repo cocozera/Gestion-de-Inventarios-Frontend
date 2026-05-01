@@ -155,9 +155,6 @@ export default function Productos() {
               ))}
             </tbody>
           </table>
-          <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            {visibles.length} producto{visibles.length !== 1 ? 's' : ''}
-          </p>
         </div>
       )}
 

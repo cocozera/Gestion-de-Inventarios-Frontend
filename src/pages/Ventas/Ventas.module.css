@@ -4,12 +4,16 @@
 }
 
 .wrapper h1 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .subtitle {
   color: var(--text-muted);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
 }
 
 .filtros {
@@ -18,14 +22,22 @@
   gap: 1rem;
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .filtros label {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .filtros input[type="date"] {
@@ -34,21 +46,25 @@
 }
 
 .btnSm {
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.9rem;
   font-size: 0.85rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
   align-self: flex-end;
+  transition: background 0.15s;
 }
 
 .btnSm:hover {
-  color: var(--text);
-  border-color: var(--text-muted);
+  background: var(--accent-hover);
 }
 
 .tableWrap {
   overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .table {
@@ -58,20 +74,26 @@
 
 .table th,
 .table td {
-  padding: 0.65rem 0.75rem;
+  padding: 0.7rem 0.9rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
 
 .table th {
-  background: var(--surface);
+  background: #fafafa;
   color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .table tr:hover td {
-  background: rgba(255,255,255,0.03);
+  background: rgba(192, 57, 43, 0.03);
 }
 
 .anulada {
@@ -90,6 +112,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .totalRow {
@@ -107,15 +130,18 @@
 
 .totalLabel {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .totalValor {
   display: block;
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 800;
-  color: var(--success);
+  color: var(--accent);
   text-align: right;
 }

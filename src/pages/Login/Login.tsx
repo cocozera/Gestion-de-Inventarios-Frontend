@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Login.module.css';
+import logo from '../../assets/logo.png';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -32,7 +33,10 @@ export default function Login() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.card}>
-        <h1 className={styles.title}>🍗 StockAI</h1>
+        <div className={styles.logoWrap}>
+          <img src={logo} alt="Logo" className={styles.logoImg} />
+        </div>
+        <h1 className={styles.title}>StockAI</h1>
         <p className={styles.subtitle}>Sistema de inventario y punto de venta</p>
         <form onSubmit={handleSubmit} className={styles.form}>
           <label>

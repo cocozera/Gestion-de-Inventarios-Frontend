@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './Layout.module.css';
+import logo from '../assets/logo.png';
 
 export default function Layout() {
   const { usuario, logout } = useAuth();
@@ -14,7 +15,10 @@ export default function Layout() {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <span className={styles.logo}>🍗 StockAI</span>
+        <a className={styles.logoLink} href="#">
+          <img src={logo} alt="Logo" className={styles.logoImg} />
+        </a>
+        <div className={styles.divider} />
         <nav className={styles.nav}>
           {(usuario?.rol === 'CAJERO' || usuario?.rol === 'ADMIN') && (
             <NavLink to="/pos" className={({ isActive }) => isActive ? styles.active : ''}>
@@ -41,7 +45,7 @@ export default function Layout() {
           )}
         </nav>
         <div className={styles.user}>
-          <span>{usuario?.nombre || usuario?.username}</span>
+          <span className={styles.userName}>{usuario?.nombre || usuario?.username}</span>
           <span className={styles.rol}>{usuario?.rol}</span>
           <button type="button" onClick={handleLogout} className={styles.logout}>
             Salir

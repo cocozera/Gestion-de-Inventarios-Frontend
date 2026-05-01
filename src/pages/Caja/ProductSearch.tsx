@@ -77,7 +77,7 @@ export default function ProductSearch({ onSearch, onSelectProducto, resultados, 
           maxHeight: '260px',
           overflowY: 'auto',
           marginTop: '0.25rem',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
         }}>
           {resultados.map((p) => (
             <div
@@ -91,7 +91,7 @@ export default function ProductSearch({ onSearch, onSelectProducto, resultados, 
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(192,57,43,0.05)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <div>
