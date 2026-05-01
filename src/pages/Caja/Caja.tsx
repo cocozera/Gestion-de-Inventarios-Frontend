@@ -14,7 +14,12 @@ function round2(n: number) {
 
 export default function Caja() {
   const { usuario } = useAuth();
-  const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
+  const [carrito, setCarrito] = useState<ItemCarrito[]>(() => {
+    try {
+      const saved = sessionStorage.getItem('carrito');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [searchVal, setSearchVal] = useState('');
   const [searchError, setSearchError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -27,6 +32,10 @@ export default function Caja() {
   const cantItems = carrito.reduce((acc, it) => acc + it.cantidad, 0);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem('carrito', JSON.stringify(carrito));
+  }, [carrito]);
 
   const agregar = useCallback((id: number, nombre: string, precio_venta: number) => {
     setCarrito((prev) => {
@@ -95,6 +104,7 @@ export default function Caja() {
       });
       setTicketId(resp.ticket_id);
       setCarrito([]);
+      sessionStorage.removeItem('carrito');
       setModalOpen(false);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al procesar la venta');
