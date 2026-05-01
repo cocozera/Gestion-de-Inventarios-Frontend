@@ -107,3 +107,48 @@
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
 }
+
+.cardSinStock {
+  border-color: var(--danger);
+  border-left: 4px solid var(--danger);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.cardSinStock .cardValue {
+  color: var(--danger);
+}
+
+.alertaSinStock {
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-left: 4px solid var(--danger);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.08);
+}
+
+.alertaSinStock h2 {
+  padding: 0.65rem 1rem;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  background: rgba(220, 38, 38, 0.07);
+  border-bottom: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.alertaSinStock li {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(220, 38, 38, 0.1);
+  font-size: 0.9rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alertaSinStock li:last-child {
+  border-bottom: none;
+}

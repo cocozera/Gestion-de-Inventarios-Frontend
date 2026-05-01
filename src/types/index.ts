@@ -29,6 +29,7 @@ export interface ProductoBusqueda {
   id: number;
   nombre: string;
   precio_venta: number;
+  stock_actual: number;
 }
 
 export interface ItemCarrito {
@@ -36,6 +37,7 @@ export interface ItemCarrito {
   nombre: string;
   precio_unitario: number;
   cantidad: number;
+  stock_actual: number;
 }
 
 export type MedioPago = 'EFECTIVO' | 'DEBITO' | 'BILLETERA_VIRTUAL';

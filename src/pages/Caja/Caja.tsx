@@ -38,17 +38,25 @@ export default function Caja() {
     sessionStorage.setItem('carrito', JSON.stringify(carrito));
   }, [carrito]);
 
-  const agregar = useCallback((id: number, nombre: string, precio_venta: number) => {
+  const agregar = useCallback((id: number, nombre: string, precio_venta: number, stock: number) => {
     setCarrito((prev) => {
       const idx = prev.findIndex((p) => p.producto_id === id);
       if (idx >= 0) {
+        const item = prev[idx];
+        if (item.cantidad >= item.stock_actual) {
+          setSearchError(`Stock máximo: ${item.stock_actual} unidad${item.stock_actual !== 1 ? 'es' : ''}`);
+          return prev;
+        }
         const next = [...prev];
-        next[idx] = { ...next[idx], cantidad: next[idx].cantidad + 1 };
+        next[idx] = { ...item, cantidad: item.cantidad + 1 };
         return next;
       }
-      return [...prev, { producto_id: id, nombre, precio_unitario: precio_venta, cantidad: 1 }];
+      if (stock <= 0) {
+        setSearchError('Sin stock disponible');
+        return prev;
+      }
+      return [...prev, { producto_id: id, nombre, precio_unitario: precio_venta, cantidad: 1, stock_actual: stock }];
     });
-    setSearchError('');
     setSearchVal('');
     inputRef.current?.focus();
   }, []);
@@ -61,7 +69,7 @@ export default function Caja() {
 
     try {
       const producto = await productosApi.buscarPorCodigo(v);
-      agregar(producto.id, producto.nombre, producto.precio_venta);
+      agregar(producto.id, producto.nombre, producto.precio_venta, producto.stock_actual);
     } catch {
       setSearchError('Código no encontrado');
     } finally {
@@ -76,7 +84,11 @@ export default function Caja() {
 
 
   const mas = (i: number) =>
-    setCarrito((prev) => prev.map((it, idx) => idx === i ? { ...it, cantidad: it.cantidad + 1 } : it));
+    setCarrito((prev) => prev.map((it, idx) => {
+      if (idx !== i) return it;
+      if (it.cantidad >= it.stock_actual) return it;
+      return { ...it, cantidad: it.cantidad + 1 };
+    }));
 
   const menos = (i: number) =>
     setCarrito((prev) => {

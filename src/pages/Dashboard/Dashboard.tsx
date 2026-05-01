@@ -37,7 +37,8 @@ export default function Dashboard() {
   }, []);
 
   const activos = productos.filter((p) => p.estado);
-  const alertas = activos.filter((p) => p.stock_actual <= p.stock_minimo && p.stock_minimo > 0);
+  const sinStock = activos.filter((p) => p.stock_actual === 0);
+  const alertas = activos.filter((p) => p.stock_actual > 0 && p.stock_actual <= p.stock_minimo && p.stock_minimo > 0);
   const ventasCompletadas = ventas.filter((v) => v.estado !== 'ANULADA');
   const totalDia = ventasCompletadas.reduce((acc, v) => acc + v.total, 0);
 
@@ -69,7 +70,31 @@ export default function Dashboard() {
             {loading ? '...' : alertas.length}
           </span>
         </div>
+        <div className={`${styles.card} ${sinStock.length ? styles.cardSinStock : ''}`}>
+          <span className={styles.cardLabel}>Sin stock</span>
+          <span className={styles.cardValue}>
+            {loading ? '...' : sinStock.length}
+          </span>
+        </div>
       </section>
+
+      {sinStock.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.alertaSinStock}>
+            <h2>🚨 Productos sin stock</h2>
+            <ul style={{ margin: 0, padding: 0 }}>
+              {sinStock.map((p) => (
+                <li key={p.id}>
+                  <span style={{ fontWeight: 700 }}>{p.nombre}</span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--danger)', fontWeight: 600, marginLeft: 'auto' }}>
+                    SIN STOCK
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {alertas.length > 0 && (
         <section className={styles.section}>

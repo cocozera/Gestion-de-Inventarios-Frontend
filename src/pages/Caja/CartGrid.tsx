@@ -68,12 +68,32 @@ export default function CartGrid({ items, onMas, onMenos, onEliminar }: Props) {
               </button>
             </td>
             <td style={{ textAlign: 'center' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                <button type="button" onClick={() => onMenos(index)} style={qtyBtn}>−</button>
-                <span style={{ fontWeight: 700, minWidth: '18px', textAlign: 'center', fontSize: '0.9rem' }}>
-                  {item.cantidad}
-                </span>
-                <button type="button" onClick={() => onMas(index)} style={qtyBtn}>+</button>
+              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <button type="button" onClick={() => onMenos(index)} style={qtyBtn}>−</button>
+                  <span style={{ fontWeight: 700, minWidth: '18px', textAlign: 'center', fontSize: '0.9rem' }}>
+                    {item.cantidad}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onMas(index)}
+                    style={{
+                      ...qtyBtn,
+                      ...(item.cantidad >= item.stock_actual
+                        ? { opacity: 0.35, cursor: 'not-allowed' }
+                        : {}),
+                    }}
+                    disabled={item.cantidad >= item.stock_actual}
+                    title={item.cantidad >= item.stock_actual ? `Máx. stock: ${item.stock_actual}` : undefined}
+                  >
+                    +
+                  </button>
+                </div>
+                {item.cantidad >= item.stock_actual && (
+                  <span style={{ fontSize: '0.65rem', color: 'var(--warning)', fontWeight: 600, letterSpacing: '0.01em' }}>
+                    máx. {item.stock_actual}
+                  </span>
+                )}
               </div>
             </td>
             <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
