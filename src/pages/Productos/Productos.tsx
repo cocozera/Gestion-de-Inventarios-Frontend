@@ -166,8 +166,14 @@ export default function Productos() {
               <label>
                 Código de barras
                 <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.codigo_barras}
-                  onChange={(e) => set('codigo_barras', e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    set('codigo_barras', val);
+                  }}
                   required
                   disabled={!!editing}
                   autoFocus
