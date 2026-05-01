@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productosApi } from '../../api/productos';
 import { Producto } from '../../types';
+import { formatPrecio } from '../../utils/format';
 import styles from './Productos.module.css';
 
 interface FormData {
@@ -10,6 +11,7 @@ interface FormData {
   precio_venta: number;
   stock_actual: number;
   stock_minimo: number;
+  estado: boolean;
 }
 
 const emptyForm: FormData = {
@@ -19,12 +21,14 @@ const emptyForm: FormData = {
   precio_venta: 0,
   stock_actual: 0,
   stock_minimo: 0,
+  estado: true,
 };
 
 export default function Productos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
   const [modal, setModal] = useState<'cerrado' | 'nuevo' | 'editar'>('cerrado');
   const [editing, setEditing] = useState<Producto | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -39,6 +43,8 @@ export default function Productos() {
   }, [q]);
 
   useEffect(() => { load(); }, [load]);
+
+  const visibles = mostrarInactivos ? productos : productos.filter((p) => p.estado);
 
   function openNew() {
     setEditing(null);
@@ -55,6 +61,7 @@ export default function Productos() {
       precio_venta: p.precio_venta,
       stock_actual: p.stock_actual,
       stock_minimo: p.stock_minimo,
+      estado: p.estado,
     });
     setModal('editar');
   }
@@ -66,7 +73,7 @@ export default function Productos() {
       if (editing) {
         await productosApi.actualizar(editing.id, form);
       } else {
-        await productosApi.crear({ ...form, categoria_id: 1, estado: true });
+        await productosApi.crear({ ...form, categoria_id: 1 });
       }
       setModal('cerrado');
       load();
@@ -77,7 +84,7 @@ export default function Productos() {
     }
   }
 
-  function set(field: keyof FormData, value: string | number) {
+  function set(field: keyof FormData, value: string | number | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
@@ -92,6 +99,15 @@ export default function Productos() {
           onChange={(e) => setQ(e.target.value)}
           className={styles.search}
         />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={mostrarInactivos}
+            onChange={(e) => setMostrarInactivos(e.target.checked)}
+            style={{ width: 'auto' }}
+          />
+          Mostrar inactivos
+        </label>
         <button type="button" onClick={openNew} className={styles.btnPrimary}>
           + Nuevo producto
         </button>
@@ -110,20 +126,26 @@ export default function Productos() {
                 <th>P. costo</th>
                 <th>Stock</th>
                 <th>Mín.</th>
+                <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {productos.map((p) => (
-                <tr key={p.id}>
+              {visibles.map((p) => (
+                <tr key={p.id} style={{ opacity: p.estado ? 1 : 0.5 }}>
                   <td>{p.codigo_barras}</td>
                   <td>{p.nombre}</td>
-                  <td>${p.precio_venta.toFixed(2)}</td>
-                  <td>${p.precio_costo.toFixed(2)}</td>
-                  <td style={{ color: p.stock_actual <= p.stock_minimo ? 'var(--warning)' : undefined }}>
+                  <td>{formatPrecio(p.precio_venta)}</td>
+                  <td>{formatPrecio(p.precio_costo)}</td>
+                  <td style={{ color: p.stock_actual <= p.stock_minimo && p.stock_minimo > 0 ? 'var(--warning)' : undefined }}>
                     {p.stock_actual}
                   </td>
                   <td>{p.stock_minimo}</td>
+                  <td>
+                    <span style={{ color: p.estado ? 'var(--success)' : 'var(--danger)', fontSize: '0.8rem', fontWeight: 600 }}>
+                      {p.estado ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
                   <td>
                     <button type="button" onClick={() => openEdit(p)} className={styles.btnSm}>
                       Editar
@@ -133,6 +155,9 @@ export default function Productos() {
               ))}
             </tbody>
           </table>
+          <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            {visibles.length} producto{visibles.length !== 1 ? 's' : ''}
+          </p>
         </div>
       )}
 
@@ -148,6 +173,7 @@ export default function Productos() {
                   onChange={(e) => set('codigo_barras', e.target.value)}
                   required
                   disabled={!!editing}
+                  autoFocus
                 />
               </label>
               <label>
@@ -197,10 +223,21 @@ export default function Productos() {
                   onChange={(e) => set('stock_minimo', parseInt(e.target.value, 10) || 0)}
                 />
               </label>
+              {editing && (
+                <label style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.estado}
+                    onChange={(e) => set('estado', e.target.checked)}
+                    style={{ width: 'auto' }}
+                  />
+                  Producto activo
+                </label>
+              )}
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setModal('cerrado')}>Cancelar</button>
                 <button type="submit" className={styles.btnPrimary} disabled={guardando}>
-                  {guardando ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
+                  {guardando ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear'}
                 </button>
               </div>
             </form>

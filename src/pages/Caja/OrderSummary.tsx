@@ -1,3 +1,5 @@
+import { formatPrecio } from '../../utils/format';
+
 interface Props {
   total: number;
   onCobrar: () => void;
@@ -7,15 +9,15 @@ interface Props {
 export default function OrderSummary({ total, onCobrar, disabled }: Props) {
   return (
     <div style={{
-      marginTop: '1.5rem',
-      padding: '1rem',
+      padding: '1.25rem',
       background: 'var(--surface)',
       borderRadius: '12px',
       border: '1px solid var(--border)',
-      minWidth: '220px',
+      minWidth: '240px',
     }}>
-      <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-        Total: <span style={{ color: 'var(--accent)' }}>${total.toFixed(2)}</span>
+      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Total</div>
+      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent)', marginBottom: '1rem' }}>
+        {formatPrecio(total)}
       </div>
       <button
         type="button"
@@ -23,12 +25,13 @@ export default function OrderSummary({ total, onCobrar, disabled }: Props) {
         disabled={disabled}
         style={{
           width: '100%',
-          padding: '0.75rem 1rem',
-          fontSize: '1.1rem',
-          fontWeight: 600,
+          padding: '0.85rem 1rem',
+          fontSize: '1rem',
+          fontWeight: 700,
           background: disabled ? 'var(--border)' : 'var(--success)',
           color: '#fff',
           cursor: disabled ? 'not-allowed' : 'pointer',
+          borderRadius: '8px',
         }}
       >
         Cobrar (F12)

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MedioPago } from '../../types';
+import { formatPrecio } from '../../utils/format';
 
 const MEDIOS: MedioPago[] = ['EFECTIVO', 'DEBITO', 'BILLETERA_VIRTUAL'];
 const LABELS: Record<MedioPago, string> = {
@@ -30,43 +31,28 @@ export default function PaymentModal({ total, onConfirm, onCancel, procesando }:
 
   const canConfirm = !procesando && (!isEfectivo || (parseFloat(montoRecibido) || 0) >= total);
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.65)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-
-  const card: React.CSSProperties = {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: '12px',
-    padding: '1.75rem',
-    minWidth: '340px',
-    maxWidth: '90vw',
-  };
-
   return (
-    <div style={overlay} onClick={onCancel}>
-      <div style={card} onClick={(e) => e.stopPropagation()}>
-        <h2 style={{ marginBottom: '1rem' }}>Confirmar pago</h2>
-        <p style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--accent)' }}>
-          Total: ${total.toFixed(2)}
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+      onClick={onCancel}
+    >
+      <div
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.75rem', minWidth: '360px', maxWidth: '90vw' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ marginBottom: '0.5rem' }}>Confirmar pago</h2>
+        <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent)', marginBottom: '1.5rem' }}>
+          {formatPrecio(total)}
         </p>
 
         <label style={{ display: 'block', marginBottom: '1rem' }}>
           <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Medio de pago</span>
           <select
             value={medio}
-            onChange={(e) => setMedio(e.target.value as MedioPago)}
+            onChange={(e) => { setMedio(e.target.value as MedioPago); setMontoRecibido(''); }}
             style={{ display: 'block', width: '100%', marginTop: '0.35rem' }}
           >
-            {MEDIOS.map((m) => (
-              <option key={m} value={m}>{LABELS[m]}</option>
-            ))}
+            {MEDIOS.map((m) => <option key={m} value={m}>{LABELS[m]}</option>)}
           </select>
         </label>
 
@@ -76,19 +62,22 @@ export default function PaymentModal({ total, onConfirm, onCancel, procesando }:
               <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Monto recibido</span>
               <input
                 type="number"
-                step="0.01"
+                step="1"
                 min={total}
                 value={montoRecibido}
                 onChange={(e) => setMontoRecibido(e.target.value)}
-                placeholder="0.00"
+                placeholder="0"
                 autoFocus
-                style={{ display: 'block', width: '100%', marginTop: '0.35rem' }}
+                style={{ display: 'block', width: '100%', marginTop: '0.35rem', fontSize: '1.1rem' }}
               />
             </label>
             {vuelto > 0 && (
-              <p style={{ color: 'var(--success)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.75rem' }}>
-                Vuelto: ${vuelto.toFixed(2)}
-              </p>
+              <div style={{ padding: '0.75rem', background: 'rgba(63,185,80,0.1)', border: '1px solid var(--success)', borderRadius: '8px', marginBottom: '0.75rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Vuelto</span>
+                <div style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.4rem' }}>
+                  {formatPrecio(vuelto)}
+                </div>
+              </div>
             )}
           </>
         )}
@@ -98,7 +87,7 @@ export default function PaymentModal({ total, onConfirm, onCancel, procesando }:
             type="button"
             onClick={onCancel}
             disabled={procesando}
-            style={{ padding: '0.6rem 1rem', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}
+            style={{ padding: '0.65rem 1rem', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}
           >
             Cancelar
           </button>
@@ -106,14 +95,7 @@ export default function PaymentModal({ total, onConfirm, onCancel, procesando }:
             type="button"
             onClick={() => onConfirm(medio)}
             disabled={!canConfirm}
-            style={{
-              flex: 1,
-              padding: '0.6rem 1rem',
-              background: canConfirm ? 'var(--success)' : 'var(--border)',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: canConfirm ? 'pointer' : 'not-allowed',
-            }}
+            style={{ flex: 1, padding: '0.65rem 1rem', background: canConfirm ? 'var(--success)' : 'var(--border)', color: '#fff', fontWeight: 700, cursor: canConfirm ? 'pointer' : 'not-allowed' }}
           >
             {procesando ? 'Procesando...' : 'Confirmar pago'}
           </button>

@@ -1,4 +1,5 @@
 import { ItemCarrito } from '../../types';
+import { formatPrecio } from '../../utils/format';
 
 interface Props {
   items: ItemCarrito[];
@@ -38,15 +39,15 @@ export default function CartGrid({ items, onMas, onMenos, onEliminar }: Props) {
       <tbody>
         {items.map((item, index) => (
           <tr key={`${item.producto_id}-${index}`} style={{ borderBottom: '1px solid var(--border)' }}>
-            <td style={{ padding: '0.5rem' }}>{item.cantidad}</td>
+            <td style={{ padding: '0.5rem', fontWeight: 700 }}>{item.cantidad}</td>
             <td style={{ padding: '0.5rem' }}>{item.nombre}</td>
-            <td style={{ padding: '0.5rem', textAlign: 'right' }}>
-              ${item.precio_unitario.toFixed(2)}
+            <td style={{ padding: '0.5rem', textAlign: 'right', color: 'var(--text-muted)' }}>
+              {formatPrecio(item.precio_unitario)}
             </td>
-            <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 600 }}>
-              ${(item.precio_unitario * item.cantidad).toFixed(2)}
+            <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, color: 'var(--accent)' }}>
+              {formatPrecio(item.precio_unitario * item.cantidad)}
             </td>
-            <td style={{ padding: '0.5rem' }}>
+            <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>
               <button type="button" onClick={() => onMenos(index)} style={btn}>−</button>
               <button type="button" onClick={() => onMas(index)} style={btn}>+</button>
               <button type="button" onClick={() => onEliminar(index)} style={{ ...btn, color: 'var(--danger)' }}>🗑</button>

@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { productosApi } from '../../api/productos';
 import { ventasApi } from '../../api/ventas';
-import { ItemCarrito, MedioPago } from '../../types';
+import { ItemCarrito, MedioPago, Producto } from '../../types';
 import ProductSearch from './ProductSearch';
 import CartGrid from './CartGrid';
 import OrderSummary from './OrderSummary';
@@ -17,9 +17,11 @@ export default function Caja() {
   const { usuario } = useAuth();
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
   const [searchError, setSearchError] = useState('');
+  const [resultados, setResultados] = useState<Producto[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [procesando, setProcesando] = useState(false);
   const [ticketId, setTicketId] = useState<number | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const total = round2(carrito.reduce((acc, it) => acc + it.precio_unitario * it.cantidad, 0));
 
@@ -34,17 +36,48 @@ export default function Caja() {
       return [...prev, { producto_id: id, nombre, precio_unitario: precio_venta, cantidad: 1 }];
     });
     setSearchError('');
+    setResultados([]);
   }, []);
 
   const buscarYAgregar = useCallback(async (valor: string) => {
     setSearchError('');
+    setResultados([]);
+
+    // 1. Intentar por código de barras exacto
     try {
       const producto = await productosApi.buscarPorCodigo(valor);
       agregar(producto.id, producto.nombre, producto.precio_venta);
+      return;
     } catch {
-      setSearchError('Producto no encontrado');
+      // no encontrado por código, buscar por nombre
+    }
+
+    // 2. Buscar por nombre
+    try {
+      const lista = await productosApi.listar(valor);
+      const activos = lista.filter((p) => p.estado);
+      if (activos.length === 0) {
+        setSearchError('Producto no encontrado');
+      } else if (activos.length === 1) {
+        agregar(activos[0].id, activos[0].nombre, activos[0].precio_venta);
+      } else {
+        setResultados(activos);
+      }
+    } catch {
+      setSearchError('Error al buscar producto');
     }
   }, [agregar]);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setResultados([]);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const mas = (i: number) =>
     setCarrito((prev) => prev.map((it, idx) => idx === i ? { ...it, cantidad: it.cantidad + 1 } : it));
@@ -90,13 +123,17 @@ export default function Caja() {
         e.preventDefault();
         if (carrito.length > 0 && !modalOpen) setModalOpen(true);
       }
+      if (e.key === 'Escape') {
+        setResultados([]);
+        setModalOpen(false);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [carrito.length, modalOpen]);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} ref={wrapperRef}>
       <header className={styles.header}>
         <h1>Punto de Venta</h1>
         <p className={styles.meta}>
@@ -114,7 +151,13 @@ export default function Caja() {
         </div>
       )}
 
-      <ProductSearch onSearch={buscarYAgregar} disabled={procesando} error={searchError} />
+      <ProductSearch
+        onSearch={buscarYAgregar}
+        onSelectProducto={(p) => agregar(p.id, p.nombre, p.precio_venta)}
+        resultados={resultados}
+        disabled={procesando}
+        error={searchError}
+      />
 
       <div className={styles.cartSection}>
         <CartGrid items={carrito} onMas={mas} onMenos={menos} onEliminar={eliminar} />
