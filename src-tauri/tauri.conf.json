@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "StockAI",
+  "productName": "StockRL",
   "version": "0.1.0",
-  "identifier": "com.stockai.desktop",
+  "identifier": "com.stockrl.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "StockAI",
+        "title": "StockRL",
         "width": 1024,
         "height": 700
       }

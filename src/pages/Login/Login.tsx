@@ -36,7 +36,7 @@ export default function Login() {
         <div className={styles.logoWrap}>
           <img src={logo} alt="Logo" className={styles.logoImg} />
         </div>
-        <h1 className={styles.title}>StockAI</h1>
+        <h1 className={styles.title}>StockRL</h1>
         <p className={styles.subtitle}>Sistema de inventario y punto de venta</p>
         <form onSubmit={handleSubmit} className={styles.form}>
           <label>
