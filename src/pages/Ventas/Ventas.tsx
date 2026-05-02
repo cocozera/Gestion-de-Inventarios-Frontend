@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { ventasApi, VentaListItem } from '../../api/ventas';
 import { formatPrecio, formatFecha } from '../../utils/format';
 import { dataCache } from '../../utils/cache';
@@ -35,6 +36,44 @@ export default function Ventas() {
   const completadas = ventas.filter((v) => v.estado !== 'ANULADA');
   const totalDia = completadas.reduce((acc, v) => acc + v.total, 0);
 
+  const [exportModal, setExportModal] = useState(false);
+  const [exportDesde, setExportDesde] = useState(hoy());
+  const [exportHasta, setExportHasta] = useState(hoy());
+  const [exportando, setExportando] = useState(false);
+
+  async function confirmarExport() {
+    setExportando(true);
+    try {
+      const desdeISO = exportDesde ? `${exportDesde}T00:00:00` : undefined;
+      const hastaISO = exportHasta ? `${exportHasta}T23:59:59` : undefined;
+      const data = await ventasApi.listar(desdeISO, hastaISO);
+      const filas = data.map((v) => ({
+        'Nº': v.id,
+        'Fecha y hora': formatFecha(v.fecha_hora),
+        'Total': v.total,
+        'Medio de pago': v.medio_pago,
+        'Estado': v.estado,
+      }));
+      const ws = XLSX.utils.json_to_sheet(filas);
+      ws['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 14 }, { wch: 20 }, { wch: 12 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+      const nombre = exportDesde && exportHasta
+        ? `ventas_${exportDesde}_${exportHasta}.xlsx`
+        : exportDesde
+          ? `ventas_desde_${exportDesde}.xlsx`
+          : exportHasta
+            ? `ventas_hasta_${exportHasta}.xlsx`
+            : 'ventas.xlsx';
+      XLSX.writeFile(wb, nombre);
+      setExportModal(false);
+    } catch {
+      alert('Error al obtener los datos para exportar');
+    } finally {
+      setExportando(false);
+    }
+  }
+
   return (
     <div className={styles.wrapper}>
       <h1>Historial de ventas</h1>
@@ -54,6 +93,13 @@ export default function Ventas() {
           onClick={() => { setDesde(''); setHasta(''); }}
         >
           Ver todo
+        </button>
+        <button
+          type="button"
+          className={styles.btnExcel}
+          onClick={() => setExportModal(true)}
+        >
+          ↓ Exportar Excel
         </button>
       </div>
 
@@ -102,6 +148,52 @@ export default function Ventas() {
             </div>
           </div>
         </>
+      )}
+      {exportModal && (
+        <div className={styles.overlay} onClick={() => !exportando && setExportModal(false)}>
+          <div className={styles.exportModalBox} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.exportModalTitle}>Exportar a Excel</h2>
+            <p className={styles.exportModalSub}>Seleccioná el rango de fechas</p>
+            <div className={styles.exportFiltros}>
+              <label>
+                <span>Desde</span>
+                <input
+                  type="date"
+                  value={exportDesde}
+                  onChange={(e) => setExportDesde(e.target.value)}
+                  disabled={exportando}
+                />
+              </label>
+              <label>
+                <span>Hasta</span>
+                <input
+                  type="date"
+                  value={exportHasta}
+                  onChange={(e) => setExportHasta(e.target.value)}
+                  disabled={exportando}
+                />
+              </label>
+            </div>
+            <div className={styles.exportModalActions}>
+              <button
+                type="button"
+                className={styles.btnCancel}
+                onClick={() => setExportModal(false)}
+                disabled={exportando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.btnExcel}
+                onClick={confirmarExport}
+                disabled={exportando}
+              >
+                {exportando ? 'Descargando...' : '↓ Descargar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
