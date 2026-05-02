@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { productosApi } from '../../api/productos';
 import { Producto } from '../../types';
 import { formatPrecio } from '../../utils/format';
@@ -35,8 +35,17 @@ export default function Productos() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [guardando, setGuardando] = useState(false);
 
+  // Modal de consulta por código de barras
+  const [consultaOpen, setConsultaOpen] = useState(false);
+  const [consultaCodigo, setConsultaCodigo] = useState('');
+  const [consultaResultado, setConsultaResultado] = useState<Producto | null>(null);
+  const [consultaError, setConsultaError] = useState('');
+  const [consultaBuscando, setConsultaBuscando] = useState(false);
+
+  const nombreRef = useRef<HTMLInputElement>(null);
+  const consultaInputRef = useRef<HTMLInputElement>(null);
+
   const load = useCallback(() => {
-    // Solo usamos caché para la lista sin filtro
     if (!q) {
       const cached = dataCache.get<Producto[]>('productos', 'all');
       if (cached) { setProductos(cached); setLoading(false); return; }
@@ -50,6 +59,23 @@ export default function Productos() {
   }, [q]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Al abrir modal nuevo con código pre-cargado → foco en nombre
+  useEffect(() => {
+    if (modal === 'nuevo' && form.codigo_barras) {
+      setTimeout(() => nombreRef.current?.focus(), 50);
+    }
+  }, [modal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Al abrir modal de consulta → foco en el input
+  useEffect(() => {
+    if (consultaOpen) {
+      setConsultaCodigo('');
+      setConsultaResultado(null);
+      setConsultaError('');
+      setTimeout(() => consultaInputRef.current?.focus(), 50);
+    }
+  }, [consultaOpen]);
 
   const visibles = mostrarInactivos ? productos : productos.filter((p) => p.estado);
 
@@ -82,7 +108,6 @@ export default function Productos() {
       } else {
         await productosApi.crear({ ...form, categoria_id: 1 });
       }
-      // Invalidar caché: productos cambió → dashboard también lo refleja
       dataCache.invalidate('productos', 'dashboard');
       setModal('cerrado');
       load();
@@ -95,6 +120,31 @@ export default function Productos() {
 
   function set(field: keyof FormData, value: string | number | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function buscarConsulta(codigo: string) {
+    const val = codigo.trim();
+    if (!val) return;
+    setConsultaBuscando(true);
+    setConsultaResultado(null);
+    setConsultaError('');
+    try {
+      const p = await productosApi.buscarPorCodigo(val);
+      const completo = productos.find((x) => x.id === p.id) ?? null;
+      if (completo) {
+        setConsultaResultado(completo);
+      } else {
+        setConsultaError('Producto no encontrado');
+      }
+    } catch {
+      setConsultaError('Producto no encontrado');
+    } finally {
+      setConsultaBuscando(false);
+      setTimeout(() => {
+        consultaInputRef.current?.focus();
+        consultaInputRef.current?.select();
+      }, 50);
+    }
   }
 
   return (
@@ -117,6 +167,9 @@ export default function Productos() {
           />
           Mostrar inactivos
         </label>
+        <button type="button" onClick={() => setConsultaOpen(true)} className={styles.btnSecondary}>
+          Consultar
+        </button>
         <button type="button" onClick={openNew} className={styles.btnPrimary}>
           + Nuevo producto
         </button>
@@ -167,6 +220,7 @@ export default function Productos() {
         </div>
       )}
 
+      {/* ── Modal nuevo / editar ── */}
       {modal !== 'cerrado' && (
         <div className={styles.overlay} onClick={() => setModal('cerrado')}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -179,18 +233,23 @@ export default function Productos() {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={form.codigo_barras}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    set('codigo_barras', val);
+                  onChange={(e) => set('codigo_barras', e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      nombreRef.current?.focus();
+                    }
                   }}
+                  placeholder="Escribilo o escaneá con la pistola"
                   required
                   disabled={!!editing}
-                  autoFocus
+                  autoFocus={!form.codigo_barras}
                 />
               </label>
               <label>
                 Nombre
                 <input
+                  ref={nombreRef}
                   value={form.nombre}
                   onChange={(e) => set('nombre', e.target.value)}
                   required
@@ -253,6 +312,103 @@ export default function Productos() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal consulta ── */}
+      {consultaOpen && (
+        <div className={styles.overlay} onClick={() => setConsultaOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2>Consultar producto</h2>
+            <p className={styles.consultaHint}>Escaneá o ingresá el código de barras</p>
+            <form onSubmit={(e) => { e.preventDefault(); buscarConsulta(consultaCodigo); }}>
+              <label>
+                Código de barras
+                <input
+                  ref={consultaInputRef}
+                  type="text"
+                  inputMode="numeric"
+                  value={consultaCodigo}
+                  onChange={(e) => {
+                    setConsultaCodigo(e.target.value.replace(/\D/g, ''));
+                    setConsultaResultado(null);
+                    setConsultaError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      buscarConsulta(consultaCodigo);
+                    }
+                  }}
+                  placeholder="Escaneá o escribí el código..."
+                  disabled={consultaBuscando}
+                />
+              </label>
+            </form>
+
+            {consultaBuscando && (
+              <p className={styles.consultaHint}>Buscando...</p>
+            )}
+
+            {consultaError && (
+              <p className={styles.consultaError}>{consultaError}</p>
+            )}
+
+            {consultaResultado && (
+              <>
+              <div className={styles.consultaCard}>
+                <div className={styles.consultaFila}>
+                  <span>Código</span>
+                  <span>{consultaResultado.codigo_barras}</span>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Nombre</span>
+                  <strong>{consultaResultado.nombre}</strong>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Precio de venta</span>
+                  <span>{formatPrecio(consultaResultado.precio_venta)}</span>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Precio de costo</span>
+                  <span>{formatPrecio(consultaResultado.precio_costo)}</span>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Stock actual</span>
+                  <span style={{ color: consultaResultado.stock_actual <= consultaResultado.stock_minimo && consultaResultado.stock_minimo > 0 ? 'var(--warning)' : undefined, fontWeight: 600 }}>
+                    {consultaResultado.stock_actual}
+                  </span>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Stock mínimo</span>
+                  <span>{consultaResultado.stock_minimo}</span>
+                </div>
+                <div className={styles.consultaFila}>
+                  <span>Estado</span>
+                  <span style={{ color: consultaResultado.estado ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
+                    {consultaResultado.estado ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" onClick={() => setConsultaOpen(false)}>Cerrar</button>
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  onClick={() => { setConsultaOpen(false); openEdit(consultaResultado!); }}
+                >
+                  Editar
+                </button>
+              </div>
+              </>
+            )}
+
+            {!consultaResultado && !consultaBuscando && !consultaError && (
+              <div className={styles.modalActions}>
+                <button type="button" onClick={() => setConsultaOpen(false)}>Cancelar</button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -151,3 +151,60 @@
   border-color: var(--text-muted);
   color: var(--text);
 }
+
+.btnSecondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btnSecondary:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.consultaHint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: -0.5rem 0 1rem;
+}
+
+.consultaError {
+  font-size: 0.875rem;
+  color: var(--danger);
+  font-weight: 600;
+  margin: 0.5rem 0 1rem;
+}
+
+.consultaCard {
+  margin-top: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.consultaFila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.consultaFila:last-child {
+  border-bottom: none;
+}
+
+.consultaFila > span:first-child {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

@@ -115,7 +115,7 @@ export default function Ventas() {
               className={`${styles.presetBtn} ${preset === p ? styles.presetActive : ''}`}
               onClick={() => aplicarPreset(p)}
             >
-              {{ hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes', todo: 'Todo' }[p]}
+              {({ hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes', todo: 'Todo' } as Record<string, string>)[p]}
             </button>
           ))}
         </div>
