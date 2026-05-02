@@ -18,7 +18,7 @@
 
 .filtros {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
@@ -29,34 +29,61 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.filtros label {
+.presets {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.presetBtn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.presetBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.presetActive {
+  background: var(--accent);
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+.fechas {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.fechas label {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.filtros input[type="date"] {
-  padding: 0.45rem 0.75rem;
-  font-size: 0.9rem;
+.labelDisabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
-.btnSm {
-  padding: 0.45rem 0.9rem;
-  font-size: 0.85rem;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  align-self: flex-end;
-  transition: background 0.15s;
-}
-
-.btnSm:hover {
-  background: var(--accent-hover);
+.fechas input[type="date"] {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.875rem;
 }
 
 .btnExcel {

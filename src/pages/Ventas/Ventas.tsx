@@ -9,11 +9,39 @@ function hoy() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function inicioSemana() {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1));
+  return d.toISOString().slice(0, 10);
+}
+
+function inicioMes() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
+type Preset = 'hoy' | 'semana' | 'mes' | 'todo' | 'custom';
+
 export default function Ventas() {
   const [ventas, setVentas] = useState<VentaListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<Preset>('hoy');
   const [desde, setDesde] = useState(hoy());
   const [hasta, setHasta] = useState(hoy());
+
+  function aplicarPreset(p: Preset) {
+    setPreset(p);
+    if (p === 'hoy')    { setDesde(hoy());         setHasta(hoy()); }
+    if (p === 'semana') { setDesde(inicioSemana()); setHasta(hoy()); }
+    if (p === 'mes')    { setDesde(inicioMes());    setHasta(hoy()); }
+    if (p === 'todo')   { setDesde('');             setHasta('');    }
+  }
+
+  function handleManualChange(campo: 'desde' | 'hasta', val: string) {
+    setPreset('custom');
+    if (campo === 'desde') setDesde(val);
+    else setHasta(val);
+  }
 
   useEffect(() => {
     const subkey = `${desde}_${hasta}`;
@@ -79,21 +107,40 @@ export default function Ventas() {
       <h1>Historial de ventas</h1>
 
       <div className={styles.filtros}>
-        <label>
-          <span>Desde</span>
-          <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-        </label>
-        <label>
-          <span>Hasta</span>
-          <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-        </label>
-        <button
-          type="button"
-          className={styles.btnSm}
-          onClick={() => { setDesde(''); setHasta(''); }}
-        >
-          Ver todo
-        </button>
+        <div className={styles.presets}>
+          {(['hoy', 'semana', 'mes', 'todo'] as Preset[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={`${styles.presetBtn} ${preset === p ? styles.presetActive : ''}`}
+              onClick={() => aplicarPreset(p)}
+            >
+              {{ hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes', todo: 'Todo' }[p]}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.fechas}>
+          <label className={preset === 'todo' ? styles.labelDisabled : ''}>
+            <span>Desde</span>
+            <input
+              type="date"
+              value={desde}
+              disabled={preset === 'todo'}
+              onChange={(e) => handleManualChange('desde', e.target.value)}
+            />
+          </label>
+          <label className={preset === 'todo' ? styles.labelDisabled : ''}>
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={hasta}
+              disabled={preset === 'todo'}
+              onChange={(e) => handleManualChange('hasta', e.target.value)}
+            />
+          </label>
+        </div>
+
         <button
           type="button"
           className={styles.btnExcel}
