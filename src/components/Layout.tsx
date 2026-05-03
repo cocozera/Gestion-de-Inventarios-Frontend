@@ -22,7 +22,7 @@ export default function Layout() {
         <nav className={styles.nav}>
           {(usuario?.rol === 'CAJERO' || usuario?.rol === 'ADMIN') && (
             <NavLink to="/pos" className={({ isActive }) => isActive ? styles.active : ''}>
-              Punto de Venta
+              Caja
             </NavLink>
           )}
           {usuario?.rol === 'ADMIN' && (

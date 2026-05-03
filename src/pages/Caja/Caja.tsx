@@ -28,6 +28,9 @@ export default function Caja() {
   const [ticketId, setTicketId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const buscandoRef = useRef(false);
+  const productCacheRef = useRef<Map<string, { id: number; nombre: string; precio_venta: number; stock_actual: number }>>(new Map());
+  const scanBufferRef = useRef('');
+  const lastKeyTimeRef = useRef(0);
 
   const total = round2(carrito.reduce((acc, it) => acc + it.precio_unitario * it.cantidad, 0));
   const cantItems = carrito.reduce((acc, it) => acc + it.cantidad, 0);
@@ -62,13 +65,26 @@ export default function Caja() {
   }, []);
 
   const buscar = useCallback(async (valor: string) => {
+    scanBufferRef.current = '';
+    lastKeyTimeRef.current = 0;
+    setSearchVal('');
     const v = valor.trim().replace(/\D/g, '');
-    if (!v || buscandoRef.current) return;
+    if (!v) return;
+
+    // Si el producto ya fue buscado antes, agregarlo directamente sin esperar la API
+    const cached = productCacheRef.current.get(v);
+    if (cached) {
+      agregar(cached.id, cached.nombre, cached.precio_venta, cached.stock_actual);
+      return;
+    }
+
+    if (buscandoRef.current) return;
     buscandoRef.current = true;
     setSearchError('');
 
     try {
       const producto = await productosApi.buscarPorCodigo(v);
+      productCacheRef.current.set(v, producto);
       agregar(producto.id, producto.nombre, producto.precio_venta, producto.stock_actual);
     } catch {
       setSearchError('Código no encontrado');
@@ -79,7 +95,28 @@ export default function Caja() {
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    buscar(searchVal);
+    buscar(scanBufferRef.current || searchVal);
+  }
+
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Backspace') {
+      scanBufferRef.current = scanBufferRef.current.slice(0, -1);
+      return;
+    }
+    if (!/^\d$/.test(e.key)) return;
+
+    const now = Date.now();
+    const delta = now - lastKeyTimeRef.current;
+    lastKeyTimeRef.current = now;
+
+    scanBufferRef.current += e.key;
+
+    // Scanner: dígitos consecutivos que llegan en menos de 80ms → suprimir display
+    if (scanBufferRef.current.length > 1 && delta < 80) {
+      e.preventDefault();
+      setSearchError('');
+    }
+    // Si es el primer dígito o viene lento (manual), onChange lo muestra normalmente
   }
 
 
@@ -117,6 +154,7 @@ export default function Caja() {
       });
       // Invalidar cachés: la venta afecta ventas, dashboard y el stock de productos
       dataCache.invalidate('ventas', 'dashboard', 'productos');
+      productCacheRef.current.clear();
       setTicketId(resp.ticket_id);
       setCarrito([]);
       sessionStorage.removeItem('carrito');
@@ -137,6 +175,27 @@ export default function Caja() {
       if (e.key === 'Escape') {
         setModalOpen(false);
       }
+
+      // Si el foco no está en el input y se presiona un dígito (sin Ctrl/Alt/Meta),
+      // redirigir la tecla al campo de código de barras
+      if (
+        !modalOpen &&
+        document.activeElement !== inputRef.current &&
+        !e.ctrlKey && !e.altKey && !e.metaKey &&
+        /^\d$/.test(e.key)
+      ) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        const now = Date.now();
+        const delta = now - lastKeyTimeRef.current;
+        lastKeyTimeRef.current = now;
+        scanBufferRef.current += e.key;
+        // Solo mostrar en el input si es el primer dígito o viene lento (manual)
+        if (scanBufferRef.current.length <= 1 || delta >= 80) {
+          setSearchVal((prev) => prev + e.key);
+        }
+        setSearchError('');
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -147,7 +206,7 @@ export default function Caja() {
 
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          <h1>Punto de Venta</h1>
+          <h1>Caja</h1>
           <p className={styles.topBarMeta}>
             {usuario?.nombre || usuario?.username}
             {' · '}
@@ -178,6 +237,12 @@ export default function Caja() {
                 onChange={(e) => {
                   setSearchVal(e.target.value.replace(/\D/g, ''));
                   setSearchError('');
+                }}
+                onKeyDown={handleInputKeyDown}
+                onBlur={() => {
+                  if (!modalOpen) {
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                  }
                 }}
                 placeholder="Ingresá el código de barras..."
                 disabled={procesando}
